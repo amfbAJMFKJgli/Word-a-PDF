@@ -248,7 +248,20 @@
 </head>
 <body>
     <div class="container">
-        <div class="icon">🔄</div>
+        <div class="icon">
+            <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="64" height="64" rx="16" fill="url(#grad)"/>
+                <path d="M20 24h16l4 4h8a2 2 0 012 2v18a2 2 0 01-2 2H20a2 2 0 01-2-2V26a2 2 0 012-2z" fill="white" opacity="0.9"/>
+                <path d="M24 32h16M24 36h16M24 40h10" stroke="#667eea" stroke-width="2" stroke-linecap="round"/>
+                <path d="M40 20v-4a2 2 0 012-2h4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+                <defs>
+                    <linearGradient id="grad" x1="0" y1="0" x2="64" y2="64">
+                        <stop stop-color="#667eea"/>
+                        <stop offset="1" stop-color="#764ba2"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+        </div>
         <h1>Conversor Word ↔ PDF</h1>
         <p class="subtitle">Convierte archivos en ambas direcciones, preservando formato, tablas e imágenes</p>
 
