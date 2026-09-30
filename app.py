@@ -1,10 +1,10 @@
 import os
 import uuid
+import subprocess
 from io import BytesIO
 from xml.sax.saxutils import escape
 from flask import Flask, render_template, request, send_file, flash, redirect, url_for
 from werkzeug.utils import secure_filename
-from pdf2docx import Converter
 from docx import Document
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
@@ -35,7 +35,13 @@ NS_A = '{http://schemas.openxmlformats.org/drawingml/2006/main}'
 NS_R = '{http://schemas.openxmlformats.org/officeDocument/2006/relationships}'
 
 
+def is_production():
+    """Detecta si estamos en Render (producción) o localmente"""
+    return os.environ.get('RENDER') is not None
+
+
 def convert_docx_to_pdf(input_path, output_path):
+    """Convierte DOCX a PDF usando reportlab (soporte Unicode, tablas e imágenes)"""
     doc = Document(input_path)
     pdf_doc = SimpleDocTemplate(output_path, pagesize=letter)
     styles = getSampleStyleSheet()
@@ -103,6 +109,39 @@ def convert_docx_to_pdf(input_path, output_path):
     pdf_doc.build(story)
 
 
+def convert_pdf_to_word_libreoffice(input_path, output_path):
+    """Convierte PDF a Word usando LibreOffice (mejor calidad)"""
+    result = subprocess.run(
+        ['libreoffice', '--headless', '--convert-to', 'docx',
+         '--outdir', os.path.dirname(output_path), input_path],
+        capture_output=True, text=True, timeout=60
+    )
+    if result.returncode != 0:
+        raise Exception(f"LibreOffice error: {result.stderr}")
+    # LibreOffice genera el archivo con el mismo nombre pero .docx
+    generated_docx = input_path.rsplit('.', 1)[0] + '.docx'
+    if os.path.exists(generated_docx) and generated_docx != output_path:
+        os.rename(generated_docx, output_path)
+
+
+def convert_pdf_to_word_pdf2docx(input_path, output_path):
+    """Convierte PDF a Word usando pdf2docx (local, sin dependencias)"""
+    from pdf2docx import Converter
+    cv = Converter(input_path)
+    cv.convert(output_path)
+    cv.close()
+
+
+def convert_pdf_to_word(input_path, output_path):
+    """Convierte PDF a Word usando el mejor método disponible"""
+    if is_production():
+        # En Render: usar LibreOffice (mejor calidad)
+        convert_pdf_to_word_libreoffice(input_path, output_path)
+    else:
+        # Local: usar pdf2docx (no requiere instalación)
+        convert_pdf_to_word_pdf2docx(input_path, output_path)
+
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
@@ -132,9 +171,7 @@ def index():
                 else:  # pdf_to_word
                     output_filename = f"{unique_id}_{filename.rsplit('.', 1)[0]}.docx"
                     output_path = os.path.join(OUTPUT_FOLDER, output_filename)
-                    cv = Converter(input_path)
-                    cv.convert(output_path)
-                    cv.close()
+                    convert_pdf_to_word(input_path, output_path)
 
                 flash('¡Conversión exitosa!', 'success')
                 return send_file(output_path, as_attachment=True, download_name=output_filename)
