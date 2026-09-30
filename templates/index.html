@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversor Word ↔ PDF</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 3rem;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 480px;
+            width: 90%;
+        }
+        h1 { color: #333; margin-bottom: 0.5rem; font-size: 1.8rem; }
+        p.subtitle { color: #666; margin-bottom: 2rem; }
+        .conversion-options {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .conversion-options input { display: none; }
+        .conversion-options label {
+            flex: 1;
+            padding: 1rem;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s;
+        }
+        .conversion-options input:checked + label {
+            border-color: #667eea;
+            background: #f8f9ff;
+            color: #667eea;
+        }
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 12px;
+            padding: 2.5rem;
+            margin-bottom: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .upload-area:hover { background: #f8f9ff; border-color: #764ba2; }
+        .upload-area input { display: none; }
+        .upload-area label {
+            cursor: pointer;
+            color: #667eea;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        .file-name { margin-top: 0.8rem; color: #333; font-weight: 500; }
+        .btn-convert {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 1rem 3rem;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-convert:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(102,126,234,0.4); }
+        .btn-convert:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .flash { padding: 1rem; border-radius: 8px; margin-bottom: 1rem; }
+        .flash.success { background: #d4edda; color: #155724; }
+        .flash.error { background: #f8d7da; color: #721c24; }
+        .icon { font-size: 3rem; margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">🔄</div>
+        <h1>Conversor Word ↔ PDF</h1>
+        <p class="subtitle">Convierte archivos en ambas direcciones</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" enctype="multipart/form-data" id="uploadForm">
+            <div class="conversion-options">
+                <input type="radio" name="conversion_type" id="wordToPdf" value="word_to_pdf" checked onchange="updateAccept()">
+                <label for="wordToPdf">📄 Word → PDF</label>
+                <input type="radio" name="conversion_type" id="pdfToWord" value="pdf_to_word" onchange="updateAccept()">
+                <label for="pdfToWord">📋 PDF → Word</label>
+            </div>
+
+            <div class="upload-area" onclick="document.getElementById('file').click()">
+                <input type="file" name="file" id="file" accept=".docx" onchange="updateFileName(this)">
+                <label>📁 Haz clic para seleccionar archivo</label>
+                <div class="file-name" id="fileName"></div>
+            </div>
+            <button type="submit" class="btn-convert" id="btnConvert">Convertir</button>
+        </form>
+    </div>
+
+    <script>
+        function updateFileName(input) {
+            const nameDiv = document.getElementById('fileName');
+            if (input.files.length > 0) {
+                nameDiv.textContent = '📄 ' + input.files[0].name;
+            } else {
+                nameDiv.textContent = '';
+            }
+        }
+
+        function updateAccept() {
+            const wordToPdf = document.getElementById('wordToPdf').checked;
+            document.getElementById('file').accept = wordToPdf ? '.docx' : '.pdf';
+        }
+    </script>
+</body>
+</html>
